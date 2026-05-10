@@ -1,0 +1,85 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Infos Système et Écran</title>
+    <style>
+        body {
+            font-family: sans-serif;
+            line-height: 1.6;
+            padding: 20px;
+            background-color: #f4f4f9;
+        }
+        .card {
+            background: white;
+            padding: 20px;
+            border-radius: 8px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+            max-width: 600px;
+            margin: auto;
+        }
+        h2 { color: #333; border-bottom: 2px solid #3498db; padding-bottom: 10px; }
+        .info { margin-bottom: 10px; font-size: 1.1em; }
+        span { font-weight: bold; color: #e74c3c; }
+        .highlight { color: #27ae60; }
+    </style>
+</head>
+<body>
+
+<div class="card">
+    <h2>Informations Appareil</h2>
+    <div class="info">Système d'exploitation : <span id="os">Analyse...</span></div>
+    <div class="info">Navigateur : <span id="browser">Analyse...</span></div>
+    
+    <h2>Dimensions Écran (Max)</h2>
+    <div class="info">Largeur totale : <span id="screenW">0</span> px</div>
+    <div class="info">Hauteur totale : <span id="screenH">0</span> px</div>
+
+    <h2>Dimensions Fenêtre (Utile)</h2>
+    <div class="info">Largeur actuelle : <span class="highlight" id="winW">0</span> px</div>
+    <div class="info">Hauteur actuelle : <span class="highlight" id="winH">0</span> px</div>
+</div>
+
+<script>
+    function updateInfos() {
+        // 1. Détection du Système et Navigateur (User Agent)
+        const ua = navigator.userAgent;
+        let os = "Inconnu";
+        let browser = "Inconnu";
+
+        if (ua.indexOf("Win") != -1) os = "Windows";
+        if (ua.indexOf("Mac") != -1) os = "MacOS";
+        if (ua.indexOf("Linux") != -1) os = "Linux";
+        if (ua.indexOf("Android") != -1) os = "Android";
+        if (ua.indexOf("like Mac") != -1) os = "iOS (iPhone/iPad)";
+
+        // Détection simplifiée du navigateur
+        if (ua.indexOf("Firefox") != -1) browser = "Firefox";
+        else if (ua.indexOf("Opera") != -1 || ua.indexOf("OPR") != -1) browser = "Opera";
+        else if (ua.indexOf("Edg") != -1) browser = "Edge";
+        else if (ua.indexOf("Chrome") != -1) browser = "Chrome";
+        else if (ua.indexOf("Safari") != -1) browser = "Safari";
+
+        // 2. Récupération des tailles
+        document.getElementById('os').innerText = os;
+        document.getElementById('browser').innerText = browser;
+        
+        // Taille physique de l'écran
+        document.getElementById('screenW').innerText = screen.width;
+        document.getElementById('screenH').innerText = screen.height;
+
+        // Taille réelle de la fenêtre (ce qui compte pour ton design)
+        document.getElementById('winW').innerText = window.innerWidth;
+        document.getElementById('winH').innerText = window.innerHeight;
+    }
+
+    // Mettre à jour au chargement
+    updateInfos();
+
+    // Mettre à jour dès que l'on redimensionne la fenêtre
+    window.onresize = updateInfos;
+</script>
+
+</body>
+</html>
