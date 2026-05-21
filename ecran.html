@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Analyse Écran & Plein Écran</title>
+    <title>Analyse Écran Pro</title>
     <style>
         :root {
             --primary: #3498db;
@@ -26,24 +26,27 @@
             transition: background 0.3s;
         }
 
-        /* Style spécifique quand on est en plein écran */
+        /* Mode Plein Écran (PC & Mobile) */
         body.fullscreen-active {
-            background-color: #000; /* Fond noir pour mieux voir les limites */
+            background-color: #000;
             padding: 5px;
         }
         body.fullscreen-active .card {
             background: #1a1a1a;
             color: #fff;
-            box-shadow: 0 0 20px rgba(0,255,0,0.2); /* Bordure subtile verte pour voir la zone active */
             border: 1px solid #333;
+            box-shadow: 0 0 20px rgba(0,255,0,0.1);
         }
         body.fullscreen-active h2 { border-color: var(--success); color: var(--success); }
-        body.fullscreen-active .label { color: #ccc; }
+        body.fullscreen-active .label { color: #aaa; }
         body.fullscreen-active .val-dim { color: #2ecc71; }
         body.fullscreen-active .val-phys { color: #e67e22; }
-        body.fullscreen-active .info-box { background: #333; color: #fff; border-left-color: var(--success); }
+        body.fullscreen-active .info-box { background: #333; color: #ddd; border-left-color: var(--success); }
+        body.fullscreen-active .separator { background: #333; }
+        body.fullscreen-active .zoom-controls { background: #333; }
+        body.fullscreen-active .zoom-display { color: #fff; }
 
-        .container { max-width: 600px; margin: 0 auto; }
+        .container { max-width: 800px; margin: 0 auto; }
 
         .card {
             background: var(--card-bg);
@@ -63,6 +66,8 @@
             display: flex;
             justify-content: space-between;
             align-items: center;
+            flex-wrap: wrap;
+            gap: 10px;
         }
 
         .row {
@@ -79,10 +84,12 @@
         .label { font-weight: 500; color: #555; font-size: 0.95rem; }
         body.fullscreen-active .label { color: #aaa; }
         
-        .value { font-weight: bold; text-align: right; }
+        .value { font-weight: bold; text-align: right; word-break: break-all; }
         .val-sys { color: var(--danger); }
         .val-dim { color: var(--success); font-family: monospace; font-size: 1.1em; }
         .val-phys { color: var(--warning); font-size: 0.9em; }
+        .val-note { font-size: 0.8em; color: #7f8c8d; font-weight: normal; }
+        body.fullscreen-active .val-note { color: #95a5a6; }
 
         /* Contrôles */
         .controls-area {
@@ -100,8 +107,8 @@
             background: #eef2f7;
             padding: 10px;
             border-radius: 50px;
+            flex-wrap: wrap;
         }
-        body.fullscreen-active .zoom-controls { background: #333; }
 
         .btn {
             border: none;
@@ -135,8 +142,6 @@
             text-transform: uppercase;
             letter-spacing: 1px;
             box-shadow: 0 4px 10px rgba(39, 174, 96, 0.3);
-            position: relative;
-            overflow: hidden;
         }
         
         .btn-fullscreen.exit {
@@ -144,16 +149,8 @@
             box-shadow: 0 4px 10px rgba(231, 76, 60, 0.3);
         }
 
-        .btn-fullscreen::before {
-            content: '⛶';
-            margin-right: 10px;
-            font-size: 1.2em;
-        }
-        .btn-fullscreen.exit::before {
-            content: '⛶';
-            content: '✕';
-            font-size: 1em;
-        }
+        .btn-fullscreen::before { content: '⛶'; margin-right: 10px; font-size: 1.2em; }
+        .btn-fullscreen.exit::before { content: '✕'; font-size: 1em; }
 
         .zoom-display {
             font-size: 1.2rem;
@@ -185,6 +182,14 @@
         }
         body.fullscreen-active .status-badge { background: var(--success); color: white; }
 
+        .platform-tag {
+            font-size: 0.8em;
+            background: #34495e;
+            color: white;
+            padding: 2px 8px;
+            border-radius: 4px;
+            margin-left: 10px;
+        }
     </style>
 </head>
 <body>
@@ -198,49 +203,50 @@
         </button>
 
         <div class="zoom-controls">
-            <button class="btn btn-zoom" onclick="adjustZoom(-0.25)" aria-label="Réduire">−</button>
+            <span style="font-size:0.9em; color:#666; margin-right:5px;">Zoom CSS :</span>
+            <button class="btn btn-zoom" onclick="adjustZoom(-0.25)">−</button>
             <div class="zoom-display">
                 <span id="zoomLevel">100</span>%
             </div>
-            <button class="btn btn-zoom" onclick="adjustZoom(0.25)" aria-label="Agrandir">+</button>
+            <button class="btn btn-zoom" onclick="adjustZoom(0.25)">+</button>
+            <span id="zoomEffect" class="val-note" style="margin-left:10px;"></span>
         </div>
     </div>
 
     <!-- Infos Système -->
     <div class="card">
         <h2>
-            Appareil 
-            <span id="fsBadge" class="status-badge" style="display:none;">PLEIN ÉCRAN</span>
+            <span>Appareil & Système</span>
+            <span id="fsBadge" class="status-badge" style="display:none;">PLEIN ÉCRAN ACTIF</span>
         </h2>
         <div class="row">
             <span class="label">Système</span>
             <span class="value val-sys" id="os">...</span>
         </div>
         <div class="row">
-            <span class="label">Modèle</span>
+            <span class="label">Navigateur / Modèle</span>
             <span class="value val-sys" id="deviceModel">...</span>
         </div>
         <div class="row">
-            <span class="label">Ratio Pixel (DPR)</span>
-            <span class="value" id="dpr">...</span>
+            <span class="label">Type d'écran</span>
+            <span class="value"><span id="isMobile" class="platform-tag">PC</span> <span id="dpr">...</span></span>
         </div>
     </div>
 
     <!-- Dimensions -->
     <div class="card">
-        <h2>Dimensions Réelles</h2>
+        <h2>Dimensions Détaillées</h2>
         
         <div class="row">
-            <span class="label">Largeur Logique (CSS)</span>
+            <span class="label">Largeur Fenêtre (CSS)</span>
             <span class="value val-dim" id="wCss">0 px</span>
         </div>
         <div class="row">
-            <span class="label">Hauteur Logique (CSS)</span>
+            <span class="label">Hauteur Fenêtre (CSS)</span>
             <span class="value val-dim" id="hCss">0 px</span>
         </div>
 
-        <div style="height: 1px; background: #eee; margin: 10px 0;"></div>
-        body.fullscreen-active div[style*="height: 1px"] { background: #333; }
+        <div class="separator" style="height: 1px; background: #eee; margin: 10px 0;"></div>
 
         <div class="row">
             <span class="label">Largeur Physique (Réelle)</span>
@@ -251,8 +257,9 @@
             <span class="value val-phys" id="hPhys">0 px</span>
         </div>
 
-        <div class="info-box">
-            <strong>Mode Plein Écran :</strong> Sur mobile, cela demande au navigateur de masquer la barre d'adresse (haut/bas) et les menus de navigation. La hauteur "Logique" devrait augmenter significativement.
+        <div class="info-box" id="infoBox">
+            <strong>PC :</strong> Le zoom CSS grossit le contenu mais ne change pas la taille de la fenêtre (les chiffres restent stables). Redimensionnez la fenêtre manuellement pour changer les valeurs.<br>
+            <strong>Mobile :</strong> Le plein écran masque les barres navigateur. Le zoom peut recalculer la largeur disponible.
         </div>
     </div>
 </div>
@@ -262,46 +269,53 @@
     const body = document.body;
     const btnFs = document.getElementById('btnFs');
     const fsBadge = document.getElementById('fsBadge');
+    const zoomEffectTxt = document.getElementById('zoomEffect');
+    const infoBox = document.getElementById('infoBox');
 
-    // 1. Détection Appareil
+    // Détection
     function getDeviceDetails() {
         const ua = navigator.userAgent;
         let os = "Inconnu";
         let device = "Inconnu";
+        let isMobile = false;
 
         if (ua.indexOf("Win") !== -1) os = "Windows";
         else if (ua.indexOf("Mac") !== -1) os = "MacOS";
         else if (ua.indexOf("Linux") !== -1) os = "Linux";
-        else if (ua.indexOf("Android") !== -1) os = "Android";
-        else if (ua.indexOf("like Mac") !== -1) os = "iOS";
+        else if (ua.indexOf("Android") !== -1) { os = "Android"; isMobile = true; }
+        else if (ua.indexOf("like Mac") !== -1) { os = "iOS"; isMobile = true; }
 
-        if (ua.indexOf("iPhone") !== -1) device = "Apple iPhone";
-        else if (ua.indexOf("iPad") !== -1) device = "Apple iPad";
-        else if (ua.indexOf("Samsung") !== -1) device = "Samsung Galaxy";
-        else if (ua.indexOf("Pixel") !== -1) device = "Google Pixel";
-        else if (ua.indexOf("Mobile") !== -1) device = "Mobile";
-        else {
-            if (ua.indexOf("Chrome") !== -1) device = "Chrome Desktop";
-            else if (ua.indexOf("Firefox") !== -1) device = "Firefox";
-            else if (ua.indexOf("Safari") !== -1) device = "Safari";
-            else if (ua.indexOf("Edg") !== -1) device = "Edge";
+        if (isMobile) {
+            if (ua.indexOf("iPhone") !== -1) device = "Apple iPhone";
+            else if (ua.indexOf("iPad") !== -1) device = "Apple iPad";
+            else if (ua.indexOf("Samsung") !== -1) device = "Samsung Galaxy";
+            else if (ua.indexOf("Pixel") !== -1) device = "Google Pixel";
+            else device = "Mobile";
+        } else {
+            if (ua.indexOf("Chrome") !== -1) device = "Chrome PC";
+            else if (ua.indexOf("Firefox") !== -1) device = "Firefox PC";
+            else if (ua.indexOf("Safari") !== -1) device = "Safari Mac";
+            else if (ua.indexOf("Edg") !== -1) device = "Edge PC";
+            else device = "Bureau";
         }
-        return { os, device };
+        return { os, device, isMobile };
     }
 
-    // 2. Mise à jour Affichage
     function updateDisplay() {
         const details = getDeviceDetails();
         const dpr = window.devicePixelRatio || 1;
 
         document.getElementById('os').innerText = details.os;
         document.getElementById('deviceModel').innerText = details.device;
-        document.getElementById('dpr').innerText = dpr.toFixed(2) + "x";
+        document.getElementById('dpr').innerText = "DPR: " + dpr.toFixed(2) + "x";
         document.getElementById('zoomLevel').innerText = Math.round(currentZoom * 100);
+        
+        const mobileTag = document.getElementById('isMobile');
+        mobileTag.innerText = details.isMobile ? "MOBILE" : "PC";
+        mobileTag.style.background = details.isMobile ? "#e67e22" : "#34495e";
 
-        // Calculs
+        // Dimensions
         const cssWidth = document.documentElement.clientWidth || window.innerWidth;
-        // Sur mobile, clientHeight est souvent plus fiable pour la zone visible réelle
         const cssHeight = document.documentElement.clientHeight || window.innerHeight;
 
         const physWidth = Math.round(cssWidth * dpr);
@@ -311,9 +325,20 @@
         document.getElementById('hCss').innerText = cssHeight + " px";
         document.getElementById('wPhys').innerText = physWidth + " px";
         document.getElementById('hPhys').innerText = physHeight + " px";
+
+        // Message contextuel sur le zoom
+        if (!details.isMobile && currentZoom !== 1.0) {
+            zoomEffectTxt.innerText = "(Contenu grossi, fenêtre stable)";
+            infoBox.innerHTML = "<strong>PC :</strong> Le zoom CSS agrandit le texte/images, mais la taille de la fenêtre (viewport) reste identique. C'est un comportement normal sur ordinateur.";
+        } else if (details.isMobile) {
+            zoomEffectTxt.innerText = "";
+            infoBox.innerHTML = "<strong>Mobile :</strong> En plein écran, les barres disparaissent. Le zoom peut modifier la largeur de calcul sur certains navigateurs mobiles.";
+        } else {
+            zoomEffectTxt.innerText = "";
+            infoBox.innerHTML = "<strong>PC :</strong> Le zoom CSS grossit le contenu mais ne change pas la taille de la fenêtre. Redimensionnez la fenêtre manuellement pour changer les valeurs.";
+        }
     }
 
-    // 3. Gestion du Zoom
     function adjustZoom(step) {
         currentZoom += step;
         if (currentZoom < 0.5) currentZoom = 0.5;
@@ -322,33 +347,17 @@
         setTimeout(updateDisplay, 100);
     }
 
-    // 4. Gestion du Plein Écran (La partie critique pour mobile)
     function toggleFullScreen() {
         const docEl = document.documentElement;
-
         if (!document.fullscreenElement) {
-            // Demander le plein écran
-            const requestFs = docEl.requestFullscreen || 
-                              docEl.webkitRequestFullscreen || 
-                              docEl.msRequestFullscreen;
-            
-            if (requestFs) {
-                requestFs.call(docEl).catch(err => {
-                    alert("Erreur plein écran: " + err.message);
-                });
-            }
+            const requestFs = docEl.requestFullscreen || docEl.webkitRequestFullscreen || docEl.msRequestFullscreen;
+            if (requestFs) requestFs.call(docEl).catch(err => console.log(err));
         } else {
-            // Quitter le plein écran
-            const exitFs = document.exitFullscreen || 
-                           document.webkitExitFullscreen || 
-                           document.msExitFullscreen;
-            if (exitFs) {
-                exitFs.call(document);
-            }
+            const exitFs = document.exitFullscreen || document.webkitExitFullscreen || document.msExitFullscreen;
+            if (exitFs) exitFs.call(document);
         }
     }
 
-    // Écouteurs d'événements pour mettre à jour l'UI quand l'état plein écran change
     document.addEventListener('fullscreenchange', updateFsUI);
     document.addEventListener('webkitfullscreenchange', updateFsUI);
     document.addEventListener('mozfullscreenchange', updateFsUI);
@@ -366,12 +375,10 @@
             btnFs.innerText = "Passer en Plein Écran";
             fsBadge.style.display = "none";
         }
-        // Force une mise à jour des dimensions car la hauteur change souvent brutalement
         setTimeout(updateDisplay, 100);
-        setTimeout(updateDisplay, 500); // Double check pour les navigateurs mobiles lents à masquer la barre
+        setTimeout(updateDisplay, 500);
     }
 
-    // Init
     updateDisplay();
     window.addEventListener('resize', updateDisplay);
     window.addEventListener('scroll', updateDisplay);
